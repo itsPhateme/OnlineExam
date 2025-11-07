@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
 
+
 class User(AbstractUser):
     USER_TYPE_CHOICES = (
         ('teacher', 'Teacher'),
@@ -13,14 +14,12 @@ class User(AbstractUser):
         return f"{self.username} ({self.user_type})"
 
 
-
 class Subject(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return self.name
-
 
 
 class Exam(models.Model):
@@ -39,7 +38,6 @@ class Exam(models.Model):
     @property
     def end_time(self):
         return self.start_date + timezone.timedelta(minutes=self.duration_minutes)
-
 
 
 class Question(models.Model):
@@ -70,17 +68,34 @@ class Choice(models.Model):
         return f"Choice for Q{self.question.id}"
 
 
-
 class StudentExam(models.Model):
-    student = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'user_type': 'student'})
-    exam = models.ForeignKey(Exam, on_delete=models.CASCADE)
+    student = models.ForeignKey(
+        'User',
+        on_delete=models.CASCADE,
+        limit_choices_to={'user_type': 'student'}
+    )
+    exam = models.ForeignKey('Exam', on_delete=models.CASCADE)
     joined_at = models.DateTimeField(auto_now_add=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    finished_at = models.DateTimeField(null=True, blank=True)
     score = models.FloatField(default=0)
     is_finished = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.student.username} - {self.exam.title}"
 
+    def time_remaining(self):
+        if self.started_at:
+            elapsed = timezone.now() - self.started_at
+            total = timezone.timedelta(minutes=self.exam.duration_minutes)
+            remaining = total - elapsed
+            return max(remaining, timezone.timedelta(seconds=0))
+        return timezone.timedelta(minutes=self.exam.duration_minutes)
+
+    def mark_as_finished(self):
+        self.is_finished = True
+        self.finished_at = timezone.now()
+        self.save()
 
 
 class Answer(models.Model):
@@ -94,9 +109,9 @@ class Answer(models.Model):
 
     def __str__(self):
         return f"Answer by {self.student_exam.student.username} - Q{self.question.id}"
-  
+
     def auto_grade(self):
-    
+
         if self.question.question_type == 'mcq':
             if self.selected_choice and self.selected_choice.is_correct:
                 self.marks_obtained = self.question.marks

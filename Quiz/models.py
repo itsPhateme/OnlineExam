@@ -52,7 +52,6 @@ class Question(models.Model):
     question_type = models.CharField(max_length=10, choices=QUESTION_TYPES)
     text = models.TextField()
     marks = models.PositiveIntegerField(default=1)
-    # Teacher’s explanation or model answer (used for auto-grading)
     model_answer = models.TextField(blank=True, null=True)
 
     def __str__(self):

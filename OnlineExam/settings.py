@@ -73,10 +73,16 @@ WSGI_APPLICATION = 'OnlineExam.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# settings.py  (replace the old DATABASES dict)
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',  
+        'NAME': 'onlineexam_db',                    
+        'USER': 'root',                        
+        'PASSWORD': '123456789',          
+        'HOST': '127.0.0.1',                         
+        'PORT': '5432',                              
     }
 }
 

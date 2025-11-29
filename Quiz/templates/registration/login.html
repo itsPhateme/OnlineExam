@@ -1,0 +1,64 @@
+<!-- templates/registration/login.html -->
+{% extends "base.html" %} 
+{% block title %}ورود به سیستم{% endblock %} 
+{% block content %}
+<div class="row justify-content-center mt-5">
+  <div class="col-md-5">
+    <div class="card shadow">
+      <div class="card-header bg-primary text-white text-center">
+        <h4>ورود به سیستم آزمون آنلاین</h4>
+      </div>
+      <div class="card-body">
+        <form method="post">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label">نام کاربری</label>
+            <input
+              type="text"
+              name="username"
+              class="form-control"
+              required
+              autofocus
+            />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">رمز عبور</label>
+            <input
+              type="password"
+              name="password"
+              class="form-control"
+              required
+            />
+          </div>
+
+          {% if form.errors %}
+          <div class="alert alert-danger">
+            نام کاربری یا رمز عبور اشتباه است.
+          </div>
+          {% endif %}
+
+          <button type="submit" class="btn btn-primary w-100">ورود</button>
+        </form>
+
+        <hr />
+
+        <div class="text-center">
+          <p>حساب ندارید؟</p>
+          <a
+            href="{% url 'Quiz:teacher_register' %}"
+            class="btn btn-outline-primary btn-sm"
+          >
+            ثبت‌نام معلم
+          </a>
+          <a
+            href="{% url 'Quiz:student_register' %}"
+            class="btn btn-outline-success btn-sm"
+          >
+            ثبت‌نام دانش‌آموز
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

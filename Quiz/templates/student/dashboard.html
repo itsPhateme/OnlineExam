@@ -1,0 +1,58 @@
+{% extends 'base.html' %} 
+{% block title %}داشبورد دانش‌آموز{% endblock %} 
+{%block content %}
+<h2>آزمون‌های من</h2>
+
+<!-- آزمون‌های ثبت‌نام شده -->
+<h4>آزمون‌های در حال انجام یا تمام‌شده</h4>
+{% for se in enrolled_exams %}
+<div class="card mb-3">
+  <div class="card-body">
+    <h5>{{ se.exam.title }}</h5>
+    <p>شروع: {{ se.started_at|date:"Y/m/d H:i" }}</p>
+    <a href="{% url 'Quiz:take_exam' se.id %}" class="btn btn-primary"
+      >ادامه آزمون</a
+    >
+    <a href="{% url 'Quiz:exam_result' se.id %}" class="btn btn-info">نتیجه</a>
+  </div>
+</div>
+{% empty %}
+<p>هنوز در آزمونی شرکت نکرده‌اید.</p>
+{% endfor %}
+
+<!-- آزمون‌های موجود -->
+<h4 class="mt-5">آزمون‌های قابل ثبت‌نام</h4>
+<form method="get" class="mb-3">
+  <div class="input-group" style="max-width: 300px">
+    <input
+      type="text"
+      name="subject"
+      class="form-control"
+      placeholder="جستجو بر اساس درس..."
+      value="{{ request.GET.subject }}"
+    />
+    <button class="btn btn-outline-secondary" type="submit">جستجو</button>
+  </div>
+</form>
+
+<div class="row">
+  {% for exam in available_exams %}
+  <div class="col-md-4 mb-3">
+    <div class="card h-100">
+      <div class="card-body">
+        <h5>{{ exam.title }}</h5>
+        <p><strong>درس:</strong> {{ exam.subject.name }}</p>
+        <p><strong>شروع:</strong> {{ exam.start_date|date:"Y/m/d H:i" }}</p>
+        <a
+          href="{% url 'Quiz:enroll_exam' exam.id %}"
+          class="btn btn-success btn-sm"
+          >شرکت در آزمون</a
+        >
+      </div>
+    </div>
+  </div>
+  {% empty %}
+  <p>در حال حاضر آزمونی برای ثبت‌نام وجود ندارد.</p>
+  {% endfor %}
+</div>
+{% endblock %}

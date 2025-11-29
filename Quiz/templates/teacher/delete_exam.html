@@ -1,0 +1,25 @@
+{% extends 'base.html' %} {% block title %}حذف آزمون{% endblock %} {% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card border-danger">
+      <div class="card-header bg-danger text-white text-center">
+        <h5>هشدار: حذف آزمون</h5>
+      </div>
+      <div class="card-body text-center">
+        <p>آیا از حذف آزمون زیر اطمینان دارید؟</p>
+        <h5 class="text-danger">{{ exam.title }}</h5>
+        <p><strong>درس:</strong> {{ exam.subject.name }}</p>
+        <p><small>این عمل قابل بازگشت نیست!</small></p>
+
+        <form method="post" class="d-inline">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger">بله، حذف کن</button>
+        </form>
+        <a href="{% url 'Quiz:teacher_dashboard' %}" class="btn btn-secondary"
+          >خیر، بازگشت</a
+        >
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

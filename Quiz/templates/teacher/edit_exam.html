@@ -1,0 +1,19 @@
+{% extends 'base.html' %} {% block title %}{% if exam %}ویرایش{% else %}ایجاد{% endif %} آزمون{% endblock %} {% block content %}
+<h2>{% if exam %}ویرایش{% else %}ایجاد{% endif %} آزمون</h2>
+
+<div class="card">
+  <div class="card-body">
+    <form method="post">
+      {% csrf_token %} {% for field in form %}
+      <div class="mb-3">
+        {{ field.label_tag }} {{ field }} {{ field.errors }}
+      </div>
+      {% endfor %}
+      <button type="submit" class="btn btn-primary">ذخیره</button>
+      <a href="{% url 'Quiz:teacher_dashboard' %}" class="btn btn-secondary"
+        >انصراف</a
+      >
+    </form>
+  </div>
+</div>
+{% endblock %}

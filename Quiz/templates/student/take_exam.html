@@ -1,0 +1,59 @@
+{% extends 'base.html' %} 
+{% block title %}در حال شرکت در آزمون{% endblock %}
+{%block content %}
+<h2>{{ student_exam.exam.title }}</h2>
+<p>
+  <strong>زمان باقی‌مانده:</strong> <span id="timer">محاسبه می‌شود...</span>
+</p>
+
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %} {% for question in student_exam.exam.questions.all %}
+  <div class="card mb-4">
+    <div class="card-header">
+      سوال {{ forloop.counter }} — {{ question.get_question_type_display }} — {{
+      question.marks }} نمره
+    </div>
+    <div class="card-body">
+      <p>{{ question.text }}</p>
+
+      {% if question.question_type == 'mcq' %} {% for choice in
+      question.choices.all %}
+      <div class="form-check">
+        <input class="form-check-input" type="radio" name="question_{{
+        question.id }}" value="{{ choice.id }}" id="choice{{ choice.id }}" {% if
+        answer.selected_choice_id == choice.id %}checked{% endif %}>
+        <label class="form-check-label" for="choice{{ choice.id }}">
+          {{ choice.text }}
+        </label>
+      </div>
+      {% endfor %} {% elif question.question_type in ['short', 'long'] %}
+      <textarea class="form-control" name="question_{{ question.id }}" rows="4">
+{{ answer.answer_text|default:'' }}"></textarea
+      >
+
+      {% elif question.question_type == 'file' %}
+      <input
+        type="file"
+        name="question_{{ question.id }}"
+        class="form-control"
+      />
+      {% if answer.uploaded_file %}
+      <small
+        >فایل قبلی:
+        <a href="{{ answer.uploaded_file.url }}" target="_blank"
+          >دانلود</a
+        ></small
+      >
+      {% endif %} {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+
+  <button type="submit" class="btn btn-lg btn-success">ارسال پاسخ‌ها</button>
+</form>
+
+<script>
+  // تایمر ساده (باید در view مدت زمان باقی‌مانده رو بفرستی)
+  // یا از JavaScript + localStorage استفاده کنی
+</script>
+{% endblock %}

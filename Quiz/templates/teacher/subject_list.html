@@ -1,0 +1,33 @@
+{% extends 'base.html' %} {% block title %}لیست دروس{% endblock %} {% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2>مدیریت دروس</h2>
+  <a href="{% url 'Quiz:create_subject' %}" class="btn btn-success">
+    <i class="bi bi-plus-lg"></i> افزودن درس جدید
+  </a>
+</div>
+
+<div class="row">
+  {% for subject in subjects %}
+  <div class="col-md-4 mb-3">
+    <div class="card h-100">
+      <div class="card-body">
+        <h5 class="card-title">{{ subject.name }}</h5>
+        <p class="card-text">{{ subject.description|default:"بدون توضیح" }}</p>
+      </div>
+      <div class="card-footer text-center">
+        <small class="text-muted">
+          تعداد آزمون‌ها: {{ subject.exam_set.count }}
+        </small>
+      </div>
+    </div>
+  </div>
+  {% empty %}
+  <div class="col-12">
+    <div class="alert alert-info text-center">
+      هنوز هیچ درسی ایجاد نشده.
+      <a href="{% url 'Quiz:create_subject' %}">اولین درس را اضافه کنید</a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

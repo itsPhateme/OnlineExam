@@ -1,0 +1,32 @@
+{% extends 'base.html' %} {% block title %}ایجاد درس جدید{% endblock %} 
+{% block content %}
+<h2>ایجاد درس جدید</h2>
+
+<div class="card">
+  <div class="card-body">
+    <form method="post">
+      {% csrf_token %}
+      <div class="mb-3">
+        <label class="form-label"
+          >نام درس <span class="text-danger">*</span></label
+        >
+        <input
+          type="text"
+          name="name"
+          class="form-control"
+          required
+          maxlength="100"
+        />
+      </div>
+      <div class="mb-3">
+        <label class="form-label">توضیحات (اختیاری)</label>
+        <textarea name="description" class="form-control" rows="3"></textarea>
+      </div>
+      <button type="submit" class="btn btn-primary">ایجاد درس</button>
+      <a href="{% url 'Quiz:subject_list' %}" class="btn btn-secondary"
+        >انصراف</a
+      >
+    </form>
+  </div>
+</div>
+{% endblock %}

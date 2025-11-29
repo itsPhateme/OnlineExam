@@ -1,0 +1,51 @@
+{% extends 'base.html' %} 
+{% block title %}نتیجه آزمون{% endblock %} 
+{% block content %}
+<div class="text-center py-5">
+  <h1>نتیجه آزمون</h1>
+  <h2 class="text-primary">{{ student_exam.exam.title }}</h2>
+
+  <div class="my-5">
+    {% if student_exam.is_graded %}
+    <h1 class="display-1 text-success">
+      {{ student_exam.score }} / {{ student_exam.exam.total_score }}
+    </h1>
+    <p class="lead">نمره نهایی شما ثبت شد.</p>
+    {% else %}
+    <h1 class="display-1 text-warning">در انتظار تصحیح</h1>
+    <p class="lead">سوالات تشریحی در حال تصحیح توسط معلم است...</p>
+    {% endif %}
+  </div>
+
+  <a href="{% url 'Quiz:student_dashboard' %}" class="btn btn-primary btn-lg"
+    >بازگشت به داشبورد</a
+  >
+</div>
+
+<!-- جزئیات پاسخ‌ها (اختیاری) -->
+<div class="mt-5">
+  <h4>جزئیات پاسخ‌ها</h4>
+  {% for answer in student_exam.answers.all %}
+  <div class="card mb-3">
+    <div class="card-body">
+      <p><strong>سوال:</strong> {{ answer.question.text }}</p>
+      <p>
+        <strong>نوع:</strong> {{ answer.question.get_question_type_display }}
+      </p>
+      <p>
+        <strong>نمره کسب‌شده:</strong>
+        {% if answer.evaluated %}
+        <span class="text-success"
+          >{{ answer.marks_obtained }} / {{ answer.question.marks }}</span
+        >
+        {% else %}
+        <span class="text-muted">در انتظار تصحیح</span>
+        {% endif %}
+      </p>
+    </div>
+  </div>
+  {% empty %}
+  <p>هنوز پاسخی ثبت نشده.</p>
+  {% endfor %}
+</div>
+{% endblock %}

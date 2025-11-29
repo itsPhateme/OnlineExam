@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block title %}اضافه کردن سوال — {{ exam.title }}{% endblock %}
+
+{% block content %}
+<h2>سوالات آزمون: {{ exam.title }}</h2>
+<a href="{% url 'Quiz:teacher_dashboard' %}" class="btn btn-secondary mb-3">بازگشت به داشبورد</a>
+
+<!-- فرم اضافه کردن سوال جدید -->
+<div class="card mb-4">
+    <div class="card-header">اضافه کردن سوال جدید</div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            {{ question_form.as_p }}
+
+            {% if question_form.cleaned_data.question_type == 'mcq' or not question_form.instance.pk %}
+                <h5 class="mt-3">گزینه‌ها (برای سوالات تستی)</h5>
+                {{ formset.management_form }}
+                {% for form in formset %}
+                    <div class="row mb-2 align-items-center">
+                        <div class="col-8">{{ form.text }}</div>
+                        <div class="col-2">{{ form.is_correct }}</div>
+                        <div class="col-2 text-muted">درست؟</div>
+                        {{ form.id }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <button type="submit" class="btn btn-success mt-3">اضافه کردن سوال</button>
+        </form>
+    </div>
+</div>
+
+<!-- لیست سوالات موجود -->
+<h3 class="mt-5">سوالات موجود ({{ questions.count }})</h3>
+{% for q in questions %}
+    <div class="card mb-3">
+        <div class="card-body">
+            <p><strong>{{ forloop.counter }}.</strong> {{ q.text }} <span class="badge bg-info">{{ q.get_question_type_display }}</span> <span class="badge bg-secondary">{{ q.marks }} نمره</span></p>
+            {% if q.question_type == 'mcq' %}
+                <ul>
+                    {% for choice in q.choices.all %}
+                        <li>{{ choice.text }} {% if choice.is_correct %}(درست){% endif %}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+            <a href="{% url 'Quiz:edit_question' q.id %}" class="btn btn-sm btn-warning">ویرایش</a>
+            <a href="{% url 'Quiz:delete_question' q.id %}" class="btn btn-sm btn-danger">حذف</a>
+        </div>
+    </div>
+{% empty %}
+    <p>هنوز سوالی اضافه نشده.</p>
+{% endfor %}
+{% endblock %}

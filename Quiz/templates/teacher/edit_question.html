@@ -1,0 +1,23 @@
+{% extends 'base.html' %} {% block title %}ویرایش سوال{% endblock %} {% block content %}
+<h2>ویرایش سوال — {{ exam.title }}</h2>
+
+<div class="card">
+  <div class="card-body">
+    <form method="post">
+      {% csrf_token %} {{ form.as_p }} {% if question.question_type == 'mcq' %}
+      <h5 class="mt-4">گزینه‌ها</h5>
+      {{ formset.management_form }} {% for choice_form in formset %}
+      <div class="row mb-2 align-items-center border-bottom pb-2">
+        <div class="col-8">{{ choice_form.text }} {{ choice_form.id }}</div>
+        <div class="col-3">{{ choice_form.is_correct }} درست؟</div>
+      </div>
+      {% endfor %} {% endif %}
+
+      <button type="submit" class="btn btn-primary mt-3">ذخیره تغییرات</button>
+      <a href="{% url 'Quiz:add_questions' exam.id %}" class="btn btn-secondary"
+        >انصراف</a
+      >
+    </form>
+  </div>
+</div>
+{% endblock %}

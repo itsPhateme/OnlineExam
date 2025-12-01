@@ -1,29 +1,28 @@
 {% extends 'base.html' %} {% block title %}حذف سوال{% endblock %} {% block content %}
-<div class="row justify-content-center">
-  <div class="col-md-8">
-    <div class="card border-danger">
-      <div class="card-header bg-danger text-white">
-        <h5>حذف سوال</h5>
-      </div>
-      <div class="card-body">
-        <p>آیا از حذف سوال زیر اطمینان دارید؟</p>
-        <div class="alert alert-light">
-          <strong>{{ question.text }}</strong><br />
-          نوع: {{ question.get_question_type_display }} — نمره: {{
-          question.marks }}
-        </div>
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5>حذف سوال</h5>
+                </div>
+                <div class="card-body">
+                    <p>آیا از حذف سوال زیر اطمینان دارید؟</p>
+                    <div class="alert alert-light">
+                        <strong>{{ question.text }}</strong><br/>
+                        نوع: {{ question.get_question_type_display }} — نمره: {{question.marks }}
+                    </div>
 
-        <form method="post" class="d-inline">
-          {% csrf_token %}
-          <button type="submit" class="btn btn-danger">بله، حذف شود</button>
-        </form>
-        <a
-          href="{% url 'Quiz:add_questions' question.exam.id %}"
-          class="btn btn-secondary"
-          >خیر، بازگشت</a
-        >
-      </div>
+                    <form method="post" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">بله، حذف شود</button>
+                    </form>
+                    <a
+                            href="{% url 'Quiz:add_questions' question.exam.id %}"
+                            class="btn btn-secondary"
+                    >خیر، بازگشت</a
+                    >
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
-</div>
 {% endblock %}

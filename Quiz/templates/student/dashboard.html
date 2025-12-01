@@ -1,9 +1,8 @@
-{% extends 'base.html' %} 
-{% block title %}داشبورد دانش‌آموز{% endblock %} 
+{% extends 'base.html' %}
+{% block title %}داشبورد دانش‌آموز{% endblock %}
 {%block content %}
 <h2>آزمون‌های من</h2>
 
-<!-- آزمون‌های ثبت‌نام شده -->
 <h4>آزمون‌های در حال انجام یا تمام‌شده</h4>
 {% for se in enrolled_exams %}
 <div class="card mb-3">
@@ -20,7 +19,6 @@
 <p>هنوز در آزمونی شرکت نکرده‌اید.</p>
 {% endfor %}
 
-<!-- آزمون‌های موجود -->
 <h4 class="mt-5">آزمون‌های قابل ثبت‌نام</h4>
 <form method="get" class="mb-3">
   <div class="input-group" style="max-width: 300px">

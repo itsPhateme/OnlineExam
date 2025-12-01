@@ -1,8 +1,8 @@
 # forms.py
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from .models import User, Exam, Question, Choice, Answer, StudentExam
-from django.utils import timezone
+
+from .models import User, Exam, Question, Choice, Answer
 
 
 class TeacherRegistrationForm(UserCreationForm):
@@ -90,4 +90,3 @@ class AnswerForm(forms.ModelForm):
                 self.fields['uploaded_file'].required = True
                 self.fields['answer_text'].widget = forms.HiddenInput()
                 self.fields['selected_choice'].widget = forms.HiddenInput()
-

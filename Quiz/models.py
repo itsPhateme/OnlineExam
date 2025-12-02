@@ -57,6 +57,8 @@ class Question(models.Model):
     def __str__(self):
         return f"Q{self.id} ({self.question_type}) - {self.exam.title}"
 
+        
+
 
 class Choice(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='choices')
@@ -79,6 +81,7 @@ class StudentExam(models.Model):
     finished_at = models.DateTimeField(null=True, blank=True)
     score = models.FloatField(default=0)
     is_finished = models.BooleanField(default=False)
+    
 
     def __str__(self):
         return f"{self.student.username} - {self.exam.title}"
@@ -96,6 +99,34 @@ class StudentExam(models.Model):
         self.finished_at = timezone.now()
         self.save()
 
+    @property
+    def needs_grading(self):
+        return self.answers.filter(
+            question__question_type__in=['short', 'long', 'file'],
+            evaluated=False
+        ).exists()
+
+    def calculate_final_score(self):
+        """محاسبه نمره نهایی = خودکار (MCQ) + دستی (تشریحی)"""
+        auto_score = self.answers.filter(
+            question__question_type='mcq',
+            evaluated=True
+        ).aggregate(total=models.Sum('marks_obtained'))['total'] or 0
+
+        manual_score = self.answers.filter(
+            question__question_type__in=['short', 'long', 'file'],
+            evaluated=True
+        ).aggregate(total=models.Sum('marks_obtained'))['total'] or 0
+
+        self.score = auto_score + manual_score
+        self.save(update_fields=['score'])
+
+    def auto_grade_mcq_answers(self):
+        """تمامی سوالات MCQ این آزمون را خودکار تصحیح کن"""
+        mcq_answers = self.answers.filter(question__question_type='mcq', evaluated=False)
+        for answer in mcq_answers:
+            answer.auto_grade()  # متد موجود در مدل Answer
+
 
 class Answer(models.Model):
     student_exam = models.ForeignKey(StudentExam, on_delete=models.CASCADE, related_name='answers')
@@ -103,7 +134,7 @@ class Answer(models.Model):
     answer_text = models.TextField(blank=True, null=True)
     selected_choice = models.ForeignKey(Choice, on_delete=models.SET_NULL, blank=True, null=True)
     uploaded_file = models.FileField(upload_to='answers/files/', blank=True, null=True)
-    marks_obtained = models.FloatField(default=0)
+    marks_obtained = models.FloatField(default=0, blank=True)
     evaluated = models.BooleanField(default=False)
 
     def __str__(self):

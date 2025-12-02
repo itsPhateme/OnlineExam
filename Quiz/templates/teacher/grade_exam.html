@@ -1,49 +1,52 @@
+<!-- teacher/grade_exam.html -->
 {% extends 'base.html' %}
-{% block title %}تصحیح آزمون — {{ student_exam.student.get_full_name }}{% endblock %}
+{% block title %}تصحیح آزمون: {{ exam.title }}{% endblock %}
 
 {% block content %}
-<h2>تصحیح پاسخ‌های تشریحی</h2>
-<p><strong>دانش‌آموز:</strong> {{ student_exam.student.get_full_name }} ({{ student_exam.student.username }})</p>
-<p><strong>آزمون:</strong> {{ student_exam.exam.title }}</p>
-<p><strong>نمره فعلی (تستی):</strong> {{ student_exam.score }} از {{ student_exam.exam.total_score }}</p>
-
-<form method="post">
-    {% csrf_token %}
-    {% for answer in answers %}
-        <div class="card mb-4">
-            <div class="card-header">
-                سوال {{ forloop.counter }} — نمره کل: {{ answer.question.marks }}
-            </div>
-            <div class="card-body">
-                <p><strong>متن سوال:</strong> {{ answer.question.text }}</p>
-                <hr>
-                <p><strong>پاسخ دانش‌آموز:</strong></p>
-                {% if answer.answer_text %}
-                    <div class="border p-3 bg-light rounded">{{ answer.answer_text }}</div>
-                {% elif answer.uploaded_file %}
-                    <a href="{{ answer.uploaded_file.url }}" target="_blank" class="btn btn-info btn-sm">
-                        دانلود فایل ارسالی
-                    </a>
-                {% else %}
-                    <em class="text-muted">بدون پاسخ</em>
-                {% endif %}
-
-                <div class="mt-3">
-                    <label><strong>نمره کسب‌شده:</strong></label>
-                    <input type="number" step="0.5" min="0" max="{{ answer.question.marks }}"
-                           name="marks_{{ answer.id }}" class="form-control w-25 d-inline"
-                           value="{{ answer.question.marks }}" required>
-                    <small class="text-muted">از {{ answer.question.marks }} نمره</small>
-                </div>
-            </div>
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="mb-1">تصحیح آزمون: <strong>{{ exam.title }}</strong></h3>
+            <p class="text-muted mb-0">
+                درس: {{ exam.subject.name }} | 
+                تعداد شرکت‌کننده: {{ student_exams.count }}
+            </p>
         </div>
-    {% empty %}
-        <div class="alert alert-success">همه سوالات این آزمون تستی هستند و نیازی به تصحیح دستی نیست.</div>
-    {% endfor %}
+        <a href="{% url 'Quiz:teacher_dashboard' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> بازگشت به داشبورد
+        </a>
+    </div>
 
-    {% if answers %}
-        <button type="submit" class="btn btn-success btn-lg">ثبت نمرات نهایی</button>
+    {% if student_exams %}
+        <div class="list-group">
+            {% for se in student_exams %}
+                <a href="{% url 'Quiz:grade_student_answers' se.id %}" 
+                   class="list-group-item list-group-item-action 
+                   {% if se.needs_grading %}list-group-item-warning{% else %}list-group-item-success{% endif %}">
+                    <div class="d-flex w-100 justify-content-between align-items-center">
+                        <h6 class="mb-1">{{ se.student.get_full_name|default:se.student.username }}</h6>
+                        <div>
+                            {% if se.needs_grading %}
+                                <span class="badge bg-warning text-dark">نیاز به تصحیح دستی</span>
+                            {% else %}
+                                <span class="badge bg-success">کاملاً تصحیح شده</span>
+                            {% endif %}
+                            <span class="badge bg-primary ms-2">
+                                نمره: {{ se.score }} / {{ exam.total_score }}
+                            </span>
+                        </div>
+                    </div>
+                    <small class="text-muted">
+                        ارسال شده در: {{ se.finished_at|date:"d F Y - H:i" }}
+                    </small>
+                </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-5 text-muted">
+            <i class="bi bi-inbox display-1"></i>
+            <h5 class="mt-3">هنوز هیچ دانش‌آموزی آزمون را ارسال نکرده است</h5>
+        </div>
     {% endif %}
-    <a href="{% url 'Quiz:teacher_dashboard' %}" class="btn btn-secondary btn-lg">بازگشت به داشبورد</a>
-</form>
+</div>
 {% endblock %}

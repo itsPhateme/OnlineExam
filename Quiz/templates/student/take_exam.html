@@ -1,51 +1,96 @@
+<!-- templates/student/take_exam.html -->
 {% extends 'base.html' %}
-{% block title %}در حال شرکت در آزمون{% endblock %}
+{% block title %}{{ student_exam.exam.title }}{% endblock %}
+
 {% block content %}
-    <h2>{{ student_exam.exam.title }}</h2>
-    <p>
-        <strong>زمان باقی‌مانده:</strong> <span id="timer">محاسبه می‌شود...</span>
-    </p>
+<div class="container mt-4">
+    <h2 class="mb-4">{{ student_exam.exam.title }}</h2>
 
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %} {% for question in student_exam.exam.questions.all %}
-        <div class="card mb-4">
-            <div class="card-header">
-                سوال {{ forloop.counter }} — {{ question.get_question_type_display }} — {{ question.marks }} نمره
-            </div>
-            <div class="card-body">
-                <p>{{ question.text }}</p>
+    <div class="alert alert-warning text-center fs-4 mb-4">
+        زمان باقی‌مانده: <strong id="timer">--:--</strong>
+    </div>
 
-                {% if question.question_type == 'mcq' %} {% for choice in question.choices.all %}
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="question_{{ question.id }}"
-                               value="{{ choice.id }}" id="choice{{ choice.id }}" {% if answer.selected_choice_id == choice.id %}checked{% endif %}>
-                        <label class="form-check-label" for="choice{{ choice.id }}">
-                            {{ choice.text }}
-                        </label>
+    {% if time_up %}
+        <div class="alert alert-danger">زمان آزمون به پایان رسید و پاسخ‌ها خودکار ارسال شدند.</div>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data" id="examForm">
+        {% csrf_token %}
+
+        {% for question in questions %}
+            {% with answer=question.student_answer %}
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <strong>سوال {{ forloop.counter }}</strong>
+                    <div>
+                        <span class="badge bg-light text-dark me-2">{{ question.get_question_type_display }}</span>
+                        <span class="badge bg-warning text-dark">{{ question.marks }} نمره</span>
                     </div>
-                {% endfor %} {% elif question.question_type == 'short' or question.question_type == 'long' %}
-                    <textarea class="form-control" name="question_{{ question.id }}" rows="4">
-{{ answer.answer_text|default:'' }}"></textarea
-                    >
+                </div>
+                <div class="card-body">
+                    <p class="lead mb-4">{{ question.text|linebreaks }}</p>
 
-                {% elif question.question_type == 'file' %}
-                    <input
-                            type="file"
-                            name="question_{{ question.id }}"
-                            class="form-control"
-                    />
-                    {% if answer.uploaded_file %}
-                        <small
-                        >فایل قبلی:
-                            <a href="{{ answer.uploaded_file.url }}" target="_blank"
-                            >دانلود</a
-                            ></small
-                        >
-                    {% endif %} {% endif %}
+                    {% if question.question_type == 'mcq' %}
+                        {% for choice in question.choices.all %}
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="radio" 
+                                       name="question_{{ question.id }}" 
+                                       value="{{ choice.id }}" 
+                                       id="choice{{ choice.id }}"
+                                       {% if answer and answer.selected_choice_id == choice.id %}checked{% endif %}>
+                                <label class="form-check-label" for="choice{{ choice.id }}">
+                                    {{ choice.text }}
+                                </label>
+                            </div>
+                        {% endfor %}
+
+                            {% elif question.question_type == "short" or question.question_type == "long" %}
+    <textarea class="form-control" name="question_{{ question.id }}"
+              rows="{% if question.question_type == 'long' %}8{% else %}5{% endif %}"
+              placeholder="پاسخ خود را اینجا بنویسید...">
+        {{ answer.answer_text|default:'' }}
+    </textarea>
+
+                    {% elif question.question_type == 'file' %}
+                        <input type="file" name="question_{{ question.id }}" class="form-control">
+                        {% if answer and answer.uploaded_file %}
+                            <small class="text-success d-block mt-2">
+                                فایل قبلی: <a href="{{ answer.uploaded_file.url }}" target="_blank">دانلود</a>
+                            </small>
+                        {% endif %}
+                    {% endif %}
+                </div>
             </div>
-        </div>
-    {% endfor %}
+            {% endwith %}
+        {% endfor %}
 
-        <button type="submit" class="btn btn-lg btn-success">ارسال پاسخ‌ها</button>
+        {% if not time_up %}
+            <div class="text-center mt-4">
+                <button type="submit" class="btn btn-success btn-lg px-5">ارسال نهایی آزمون</button>
+            </div>
+        {% endif %}
     </form>
+</div>
+
+<script>
+const startTime = new Date("{{ student_exam.started_at|date:'c' }}").getTime();
+const durationSeconds = {{ student_exam.exam.duration_minutes }} * 60;
+
+function updateTimer() {
+    const now = new Date().getTime();
+    const remaining = durationSeconds - Math.floor((now - startTime) / 1000);
+    
+    if (remaining <= 0) {
+        document.getElementById("timer").innerHTML = "00:00";
+        document.getElementById("examForm").submit();
+        return;
+    }
+
+    const mins = Math.floor(remaining / 60).toString().padStart(2, '0');
+    const secs = (remaining % 60).toString().padStart(2, '0');
+    document.getElementById("timer").innerHTML = mins + ":" + secs;
+}
+setInterval(updateTimer, 1000);
+updateTimer();
+</script>
 {% endblock %}

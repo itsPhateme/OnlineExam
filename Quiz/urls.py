@@ -25,5 +25,10 @@ urlpatterns = [
     path('exam/<int:exam_id>/enroll/', views.enroll_exam, name='enroll_exam'),
     path('exam/<int:student_exam_id>/take/', views.take_exam, name='take_exam'),
     path('exam/<int:student_exam_id>/result/', views.exam_result, name='exam_result'),
-    path('exam/<int:student_exam_id>/grade/', views.grade_exam, name='grade_exam'),
+    path('exam/<int:exam_id>/grade/', 
+        views.grade_exam, 
+        name='grade_exam'),
+    path('student-exam/<int:student_exam_id>/grade/', 
+        views.grade_student_answers, 
+        name='grade_student_answers'),
 ]

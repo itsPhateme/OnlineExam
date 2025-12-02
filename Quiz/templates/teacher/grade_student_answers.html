@@ -1,0 +1,87 @@
+<!-- Quiz/templates/teacher/grade_student_answers.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}تصحیح پاسخ‌های {{ student_exam.student.get_full_name|default:student_exam.student.username }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3>تصحیح پاسخ‌های:</h3>
+            <h4 class="text-primary mb-0">
+                {{ student_exam.student.get_full_name|default:student_exam.student.username }}
+            </h4>
+            <p class="text-muted mb-0">
+                آزمون: <strong>{{ student_exam.exam.title }}</strong> |
+                درس: {{ student_exam.exam.subject.name }}
+            </p>
+        </div>
+        <a href="{% url 'Quiz:grade_exam' student_exam.exam.id %}" class="btn btn-outline-secondary">
+            بازگشت به لیست دانش‌آموزان
+        </a>
+    </div>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        {% for answer in answers_to_grade %}
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>سوال {{ forloop.counter }}</span>
+                    <span class="badge bg-info">حداکثر {{ answer.question.marks }} نمره</span>
+                </div>
+                <div class="card-body">
+                    <p class="mb-3"><strong>متن سوال:</strong></p>
+                    <p class="border rounded p-3 bg-light">{{ answer.question.text }}</p>
+
+                    <p class="mb-3"><strong>پاسخ دانش‌آموز:</strong></p>
+                    {% if answer.question.question_type == 'file' and answer.uploaded_file %}
+                        <a href="{{ answer.uploaded_file.url }}" target="_blank" class="btn btn-sm btn-outline-primary mb-3">
+                            دانلود فایل ارسالی
+                        </a>
+                    {% else %}
+                        <p class="border rounded p-3 bg-light">
+                            {{ answer.answer_text|default:"<span class='text-muted'>بدون پاسخ</span>"|safe }}
+                        </p>
+                    {% endif %}
+
+                    {% if answer.question.model_answer %}
+                        <details class="mt-3">
+                            <summary class="text-primary">نمایش پاسخ مدل (کلیک کنید)</summary>
+                            <div class="border rounded p-3 bg-success text-white mt-2">
+                                {{ answer.question.model_answer }}
+                            </div>
+                        </details>
+                    {% endif %}
+
+                    <div class="mt-4">
+                        <label class="form-label fw-bold">نمره (از {{ answer.question.marks }}):</label>
+                        <input type="number"
+                               name="marks_{{ answer.id }}"
+                               value="{{ answer.marks_obtained|default:'0' }}"
+                               min="0"
+                               max="{{ answer.question.marks }}"
+                               step="0.5"
+                               class="form-control w-25"
+                               required>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="alert alert-success">
+                تمام سوالات این دانش‌آموز به صورت خودکار تصحیح شده‌اند (مثل سوالات تستی).
+                <br>نمره نهایی: <strong>{{ student_exam.score }} از {{ student_exam.exam.total_score }}</strong>
+            </div>
+        {% endfor %}
+
+        {% if answers_to_grade %}
+            <div class="text-end">
+                <button type="submit" class="btn btn-success btn-lg px-5">
+                    ذخیره نمرات و محاسبه نهایی
+                </button>
+            </div>
+        {% endif %}
+    </form>
+</div>
+{% endblock %}

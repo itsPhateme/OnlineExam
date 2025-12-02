@@ -5,7 +5,7 @@
 <h2>سوالات آزمون: {{ exam.title }}</h2>
 <a href="{% url 'Quiz:teacher_dashboard' %}" class="btn btn-secondary mb-3">بازگشت به داشبورد</a>
 
-<!-- فرم اضافه کردن سوال جدید -->
+
 <div class="card mb-4">
     <div class="card-header">اضافه کردن سوال جدید</div>
     <div class="card-body">
@@ -31,7 +31,7 @@
     </div>
 </div>
 
-<!-- لیست سوالات موجود -->
+
 <h3 class="mt-5">سوالات موجود ({{ questions.count }})</h3>
 {% for q in questions %}
     <div class="card mb-3">

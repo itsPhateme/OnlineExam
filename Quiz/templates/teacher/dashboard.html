@@ -62,8 +62,7 @@
                                     </a>
                                 </div>
 
-                                <!-- لینک هوشمند تصحیح -->
-                              <!-- لینک هوشمند تصحیح — کاملاً ایمن و بدون خطا -->
+
                                                         {% if exam.single_submission and exam.first_submission %}
                                 <a href="{% url 'Quiz:grade_student_answers' exam.first_submission.id %}" class="btn btn-success w-100">
                                     تصحیح پاسخ (۱ نفر)
@@ -86,7 +85,7 @@
             {% endfor %}
         </div>
     {% else %}
-        <!-- حالت خالی بودن آزمون -->
+
         <div class="text-center py-5 my-5">
             <i class="bi bi-inbox display-1 text-muted opacity-50"></i>
             <h3 class="mt-4 text-muted">هنوز آزمونی ایجاد نکرده‌اید</h3>

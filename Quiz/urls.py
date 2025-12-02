@@ -8,7 +8,7 @@ app_name = 'Quiz'
 
 urlpatterns = [
     path('', views.home, name='home'),                         
-    path('login/', auth_views.LoginView.as_view(template_name='login.html'), name='login'),
+    path('login/', auth_views.LoginView.as_view(), name='login'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('register/teacher/', views.teacher_register, name='teacher_register'),
     path('register/student/', views.student_register, name='student_register'),

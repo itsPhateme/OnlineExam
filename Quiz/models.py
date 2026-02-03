@@ -1,7 +1,16 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, UserManager
 from django.utils import timezone
+import random
 
+# --- تعریف Managerهای سفارشی ---
+class TeacherManager(UserManager):
+    def get_queryset(self):
+        return super().get_queryset().filter(user_type='teacher')
+
+class StudentManager(UserManager):
+    def get_queryset(self):
+        return super().get_queryset().filter(user_type='student')
 
 class User(AbstractUser):
     USER_TYPE_CHOICES = (
@@ -9,6 +18,11 @@ class User(AbstractUser):
         ('student', 'Student'),
     )
     user_type = models.CharField(max_length=10, choices=USER_TYPE_CHOICES)
+    phone_number = models.CharField(max_length=15, blank=True, null=True, unique=True)
+
+    objects = UserManager()       # منیجر پیش‌فرض
+    teachers = TeacherManager()   # منیجر اختصاصی معلم‌ها
+    students = StudentManager()   # منیجر اختصاصی دانش‌آموزان
 
     def __str__(self):
         return f"{self.username} ({self.user_type})"
@@ -56,8 +70,6 @@ class Question(models.Model):
 
     def __str__(self):
         return f"Q{self.id} ({self.question_type}) - {self.exam.title}"
-
-        
 
 
 class Choice(models.Model):
@@ -107,7 +119,6 @@ class StudentExam(models.Model):
         ).exists()
 
     def calculate_final_score(self):
-        """محاسبه نمره نهایی = خودکار (MCQ) + دستی (تشریحی)"""
         auto_score = self.answers.filter(
             question__question_type='mcq',
             evaluated=True
@@ -122,10 +133,9 @@ class StudentExam(models.Model):
         self.save(update_fields=['score'])
 
     def auto_grade_mcq_answers(self):
-        """تمامی سوالات MCQ این آزمون را خودکار تصحیح کن"""
         mcq_answers = self.answers.filter(question__question_type='mcq', evaluated=False)
         for answer in mcq_answers:
-            answer.auto_grade()  # متد موجود در مدل Answer
+            answer.auto_grade()
 
 
 class Answer(models.Model):
@@ -141,7 +151,6 @@ class Answer(models.Model):
         return f"Answer by {self.student_exam.student.username} - Q{self.question.id}"
 
     def auto_grade(self):
-
         if self.question.question_type == 'mcq':
             if self.selected_choice and self.selected_choice.is_correct:
                 self.marks_obtained = self.question.marks
@@ -151,3 +160,18 @@ class Answer(models.Model):
                     self.marks_obtained = self.question.marks
         self.evaluated = True
         self.save()
+
+class OTP(models.Model):
+    phone = models.CharField(max_length=15)
+    code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def generate_code(self):
+        self.code = str(random.randint(100000, 999999))
+        self.save()
+        
+    def is_valid(self):
+        return timezone.now() < self.created_at + timezone.timedelta(minutes=2)
+
+    def __str__(self):
+        return f"{self.phone} - {self.code}"

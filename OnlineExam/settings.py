@@ -89,8 +89,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 
-SECRET_KEY = 'django-insecure-ou*)pn8^8o+emhqq+*u4r!@def2nyzjgo
-
+SECRET_KEY = 'django-insecure-ou*)pn8^8o+emhqq+*u4r!@def2nyzjgo'
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 DEBUG = True
 

@@ -1,16 +1,19 @@
-from django.db import models
-from django.contrib.auth.models import AbstractUser, UserManager
-from django.utils import timezone
 import random
 
-# --- تعریف Managerهای سفارشی ---
+from django.contrib.auth.models import AbstractUser, UserManager
+from django.db import models
+from django.utils import timezone
+
+
 class TeacherManager(UserManager):
     def get_queryset(self):
         return super().get_queryset().filter(user_type='teacher')
 
+
 class StudentManager(UserManager):
     def get_queryset(self):
         return super().get_queryset().filter(user_type='student')
+
 
 class User(AbstractUser):
     USER_TYPE_CHOICES = (
@@ -20,9 +23,9 @@ class User(AbstractUser):
     user_type = models.CharField(max_length=10, choices=USER_TYPE_CHOICES)
     phone_number = models.CharField(max_length=15, blank=True, null=True, unique=True)
 
-    objects = UserManager()       # منیجر پیش‌فرض
-    teachers = TeacherManager()   # منیجر اختصاصی معلم‌ها
-    students = StudentManager()   # منیجر اختصاصی دانش‌آموزان
+    objects = UserManager()
+    teachers = TeacherManager()
+    students = StudentManager()
 
     def __str__(self):
         return f"{self.username} ({self.user_type})"
@@ -93,7 +96,6 @@ class StudentExam(models.Model):
     finished_at = models.DateTimeField(null=True, blank=True)
     score = models.FloatField(default=0)
     is_finished = models.BooleanField(default=False)
-    
 
     def __str__(self):
         return f"{self.student.username} - {self.exam.title}"
@@ -161,6 +163,7 @@ class Answer(models.Model):
         self.evaluated = True
         self.save()
 
+
 class OTP(models.Model):
     phone = models.CharField(max_length=15)
     code = models.CharField(max_length=6)
@@ -169,7 +172,7 @@ class OTP(models.Model):
     def generate_code(self):
         self.code = str(random.randint(100000, 999999))
         self.save()
-        
+
     def is_valid(self):
         return timezone.now() < self.created_at + timezone.timedelta(minutes=2)
 

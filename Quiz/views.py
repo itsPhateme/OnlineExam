@@ -1,18 +1,16 @@
 import logging
+
 from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect, get_object_or_404
-from django.utils import timezone
-from django.http import HttpResponse
-
-# --- ایمپورت‌های مربوط به ایمیل و توکن ---
 from django.contrib.sites.shortcuts import get_current_site
+from django.core.mail import EmailMessage
+from django.http import HttpResponse
+from django.shortcuts import render, redirect, get_object_or_404
+from django.template.loader import render_to_string
+from django.utils import timezone
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.template.loader import render_to_string
-from django.core.mail import EmailMessage
-from .tokens import account_activation_token
 
 from .forms import (
     TeacherRegistrationForm,
@@ -22,11 +20,11 @@ from .forms import (
     ChoiceFormSet,
 )
 from .models import Subject, Exam, Question, StudentExam, Answer, User, OTP
+from .tokens import account_activation_token
+
+logger = logging.getLogger('quiz')
 
 
-logger = logging.getLogger('quiz')  
-
-# --- تابع کمکی ارسال ایمیل ---
 def send_activation_email(request, user, to_email):
     current_site = get_current_site(request)
     mail_subject = 'فعال‌سازی حساب کاربری'
@@ -39,11 +37,12 @@ def send_activation_email(request, user, to_email):
     email = EmailMessage(mail_subject, message, to=[to_email])
     email.send()
 
+
 def home(request):
     logger.info(f"Home page visit by {request.user}")
     if not request.user.is_authenticated:
         return redirect('Quiz:login')
-    
+
     if request.user.user_type == 'teacher':
         return redirect('Quiz:teacher_dashboard')
     else:
@@ -55,16 +54,15 @@ def teacher_register(request):
         form = TeacherRegistrationForm(request.POST)
         if form.is_valid():
             user = form.save(commit=False)
-            user.is_active = False # غیرفعال تا زمان تایید ایمیل
+            user.is_active = False  # غیرفعال تا زمان تایید ایمیل
             user.save()
-            
-            # ارسال ایمیل
+
             send_activation_email(request, user, form.cleaned_data.get('email'))
-            
+
             return HttpResponse('ثبت‌نام انجام شد. لطفاً برای فعال‌سازی حساب، ایمیل خود را چک کنید.')
     else:
         form = TeacherRegistrationForm()
-    
+
     return render(request, 'register.html', {'form': form, 'role': 'معلم'})
 
 
@@ -73,26 +71,25 @@ def student_register(request):
         form = StudentRegistrationForm(request.POST)
         if form.is_valid():
             user = form.save(commit=False)
-            user.is_active = False # غیرفعال تا زمان تایید ایمیل
+            user.is_active = False
             user.save()
-            
-            # ارسال ایمیل
+
             send_activation_email(request, user, form.cleaned_data.get('email'))
-            
+
             return HttpResponse('ثبت‌نام انجام شد. لطفاً برای فعال‌سازی حساب، ایمیل خود را چک کنید.')
     else:
         form = StudentRegistrationForm()
-    
+
     return render(request, 'register.html', {'form': form, 'role': 'دانش‌آموز'})
 
-# --- ویوی فعال‌سازی ایمیل ---
+
 def activate(request, uidb64, token):
     try:
         uid = force_str(urlsafe_base64_decode(uidb64))
         user = User.objects.get(pk=uid)
     except(TypeError, ValueError, OverflowError, User.DoesNotExist):
         user = None
-    
+
     if user is not None and account_activation_token.check_token(user, token):
         user.is_active = True
         user.save()
@@ -102,7 +99,7 @@ def activate(request, uidb64, token):
     else:
         return HttpResponse('لینک فعال‌سازی نامعتبر است!')
 
-# --- ویوی تایید پیامک (SMS) - بخش امتیازی ---
+
 def verify_sms(request):
     """
     این ویو یک شبیه‌سازی برای سیستم OTP است.
@@ -111,29 +108,28 @@ def verify_sms(request):
     if request.method == 'POST':
         phone = request.POST.get('phone')
         code_input = request.POST.get('code')
-        
-        # مرحله ۱: درخواست کد
+
         if phone and not code_input:
             otp, created = OTP.objects.get_or_create(phone=phone)
             otp.generate_code()
-            
+
             # Mock sending SMS (چاپ در کنسول به جای ارسال واقعی)
             print(f"\n************ SMS ************")
             print(f"To: {phone}")
             print(f"Code: {otp.code}")
             print(f"*****************************\n")
-            
+
             messages.info(request, f"کد تایید به {phone} ارسال شد (کنسول را چک کنید).")
             return render(request, 'verify_sms.html', {'phone': phone, 'step': 2})
-            
-        # مرحله ۲: تایید کد
+
+
         elif phone and code_input:
             try:
                 otp = OTP.objects.filter(phone=phone).last()
                 if otp and otp.code == code_input and otp.is_valid():
                     otp.delete()
                     messages.success(request, "شماره موبایل تایید شد!")
-                    return redirect('Quiz:home') # یا هر صفحه دیگر
+                    return redirect('Quiz:home')
                 else:
                     messages.error(request, "کد اشتباه یا منقضی شده است.")
                     return render(request, 'verify_sms.html', {'phone': phone, 'step': 2})
@@ -142,14 +138,9 @@ def verify_sms(request):
 
     return render(request, 'verify_sms.html', {'step': 1})
 
-# --- بقیه ویوها بدون تغییر می‌مانند ---
-# (کدهای داشبورد، آزمون و ... که قبلا فرستادید را اینجا حفظ کنید)
-# فقط قسمت‌های teacher_register و student_register را با کدهای بالا جایگزین کنید.
-# برای جلوگیری از طولانی شدن، کدهای تکراری پایین را دوباره نمی‌نویسم اما در فایل نهایی باید باشند.
 
 @login_required
 def teacher_dashboard(request):
-    # همان کد قبلی شما
     if request.user.user_type != 'teacher':
         return redirect('Quiz:student_dashboard')
     exams = Exam.objects.filter(teacher=request.user).prefetch_related(
@@ -161,28 +152,26 @@ def teacher_dashboard(request):
         exam.submitted_count = submitted.count()
     return render(request, 'teacher/dashboard.html', {'exams': exams})
 
+
 @login_required
 def student_dashboard(request):
-    # همان کد قبلی شما
     if request.user.user_type != 'student':
         return redirect('Quiz:teacher_dashboard')
     enrolled = StudentExam.objects.filter(student=request.user)
     available_exams = Exam.objects.exclude(studentexam__student=request.user)
-    
-    # ... بقیه کد ...
+
     return render(request, 'student/dashboard.html', {
         'enrolled_exams': enrolled,
         'available_exams': available_exams,
         'subjects': Subject.objects.all()
     })
 
-# ... (ادامه توابع دیگر مثل create_exam, take_exam, ...) ...
-# توابع دیگر را دقیقا کپی کنید یا بگذارید بمانند.
 
 @login_required
 def subject_list(request):
     subjects = Subject.objects.all()
     return render(request, 'teacher/subject_list.html', {'subjects': subjects})
+
 
 @login_required
 def create_subject(request):
@@ -193,6 +182,7 @@ def create_subject(request):
             Subject.objects.create(name=name.strip(), description=description)
             return redirect('Quiz:subject_list')
     return render(request, 'teacher/create_subject.html')
+
 
 @login_required
 def create_exam(request):
@@ -207,6 +197,7 @@ def create_exam(request):
         form = ExamForm()
     return render(request, 'teacher/create_exam.html', {'form': form})
 
+
 @login_required
 def edit_exam(request, exam_id):
     exam = get_object_or_404(Exam, id=exam_id, teacher=request.user)
@@ -219,6 +210,7 @@ def edit_exam(request, exam_id):
         form = ExamForm(instance=exam)
     return render(request, 'teacher/edit_exam.html', {'form': form, 'exam': exam})
 
+
 @login_required
 def delete_exam(request, exam_id):
     exam = get_object_or_404(Exam, id=exam_id, teacher=request.user)
@@ -226,6 +218,7 @@ def delete_exam(request, exam_id):
         exam.delete()
         return redirect('Quiz:teacher_dashboard')
     return render(request, 'teacher/delete_exam.html', {'exam': exam})
+
 
 @login_required
 def add_questions(request, exam_id):
@@ -249,6 +242,7 @@ def add_questions(request, exam_id):
         'exam': exam, 'question_form': question_form, 'formset': formset, 'questions': questions
     })
 
+
 @login_required
 def edit_question(request, question_id):
     question = get_object_or_404(Question, id=question_id, exam__teacher=request.user)
@@ -263,7 +257,9 @@ def edit_question(request, question_id):
     else:
         form = QuestionForm(instance=question)
         formset = ChoiceFormSet(instance=question) if question.question_type == 'mcq' else ChoiceFormSet()
-    return render(request, 'teacher/edit_question.html', {'form': form, 'formset': formset, 'question': question, 'exam': question.exam})
+    return render(request, 'teacher/edit_question.html',
+                  {'form': form, 'formset': formset, 'question': question, 'exam': question.exam})
+
 
 @login_required
 def delete_question(request, question_id):
@@ -274,6 +270,7 @@ def delete_question(request, question_id):
         return redirect('Quiz:add_questions', exam_id)
     return render(request, 'teacher/delete_question.html', {'question': question})
 
+
 @login_required
 def enroll_exam(request, exam_id):
     exam = get_object_or_404(Exam, id=exam_id)
@@ -283,6 +280,7 @@ def enroll_exam(request, exam_id):
         student_exam.save()
     return redirect('Quiz:take_exam', student_exam.id)
 
+
 @login_required
 def take_exam(request, student_exam_id):
     student_exam = get_object_or_404(StudentExam, id=student_exam_id, student=request.user, is_finished=False)
@@ -290,33 +288,35 @@ def take_exam(request, student_exam_id):
     if not student_exam.started_at:
         student_exam.started_at = timezone.now()
         student_exam.save()
-    
+
     elapsed = timezone.now() - student_exam.started_at
     remaining_time = timezone.timedelta(minutes=exam.duration_minutes) - elapsed
-    
+
     if request.method == "POST" or remaining_time.total_seconds() <= 0:
         for question in exam.questions.all():
             answer, _ = Answer.objects.get_or_create(student_exam=student_exam, question=question)
-            # منطق دریافت جواب از فرم (نیاز به کد دقیق هندل کردن فرم هست که اینجا خلاصه شده)
-            # فرض بر این است که لاجیک ذخیره جواب وجود دارد
+
             if question.question_type == 'mcq': answer.auto_grade()
-        
+
         student_exam.calculate_final_score()
         student_exam.mark_as_finished()
         return redirect('Quiz:exam_result', student_exam.id)
-    
+
     return render(request, 'student/take_exam.html', {'student_exam': student_exam, 'exam': exam})
+
 
 @login_required
 def exam_result(request, student_exam_id):
     student_exam = get_object_or_404(StudentExam, id=student_exam_id, student=request.user)
     return render(request, 'student/result.html', {'student_exam': student_exam})
 
+
 @login_required
 def grade_exam(request, exam_id):
     exam = get_object_or_404(Exam, id=exam_id, teacher=request.user)
     student_exams = StudentExam.objects.filter(exam=exam, is_finished=True)
     return render(request, 'teacher/grade_exam.html', {'exam': exam, 'student_exams': student_exams})
+
 
 @login_required
 def grade_student_answers(request, student_exam_id):
@@ -325,6 +325,7 @@ def grade_student_answers(request, student_exam_id):
         student_exam.calculate_final_score()
         return redirect('Quiz:grade_exam', student_exam.exam.id)
     return render(request, 'teacher/grade_student_answers.html', {'student_exam': student_exam})
+
 
 def user_logout(request):
     logout(request)
